@@ -8,6 +8,7 @@
             margin: 0;
             padding-bottom: 3rem;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #4b4b4b;
         }
 
         #form {
@@ -55,8 +56,29 @@
             padding: 0.5rem 1rem;
         }
 
-        #messages>li:nth-child(odd) {
-            background: #efefef;
+        .right{
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .ownMsg{
+           width: fit-content;
+            padding: 5px 25px;
+            border-radius: 20px;
+            color: white;
+            background-color: #48b28b;
+        }
+        .otherMsg{
+            width: fit-content;
+            padding: 5px 7px 5px 24px;
+            border-radius: 20px;
+            color: white;
+            background-color: #4e0d53;
+        }
+        p{
+            float: right;
+            margin-left: 25px;
+            font-size: 10px;
         }
     </style>
 </head>
@@ -70,10 +92,10 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        var name =prompt('Enter your name'); 
         var socket = io();
-
-        var messages = document.getElementById('messages');
-        var form = document.getElementById('form');
+        socket.emit('get name',name);
+        var s="";
         var input = document.getElementById('input');
 
         form.addEventListener('submit', function (e) {
@@ -84,10 +106,27 @@
             }
         });
 
-        socket.on('chat message', function (msg) {
-            var item = document.createElement('li');
-            item.textContent = msg;
-            messages.appendChild(item);
+        socket.on('chat message', (data)=>{
+            if(socket.id===data.id){
+                s+=`
+                <li >
+                    <div class="right"/>
+                    <div class="ownMsg">${data.msg}</div>
+                    </div>
+                </li>
+                <hr/>
+                `;
+            }
+            else{
+                s+=`
+                <li>
+                    <div class="otherMsg">
+                        <p>(${data.clientName})</p>
+                            ${data.msg}</div></li>
+                <hr/>
+                `;
+            }
+            document.getElementById('messages').innerHTML = s;
             window.scrollTo(0, document.body.scrollHeight);
         });
     </script>

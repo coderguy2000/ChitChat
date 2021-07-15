@@ -1,0 +1,24 @@
+download express,socket.io
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io();
+</script>
+
+//Always server side
+1.)socket.broadcast.emit('emit_name',"meassge") #it run function for every client exceppt sender 
+2.)io.emit('emit_name',"msg");  #it run function for every client exceppt sender 
+3.)io.on('connection', (socket) => {
+        socket.on('disconnect', () => {
+        console.log('user disconnected');
+        });
+    });
+
+
+
+//For both client and server sisde
+1.)socket.emit('emit_name',"msg");  #where function calls
+2.)socket.on('emit_name', function (msg) {}); #where function get data and tackle it
+
+
+/*we can send data through emit to server => server can broadcast/unbroadcast and send data back to client send => now we can do anythig with data to display everyone

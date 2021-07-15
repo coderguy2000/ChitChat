@@ -11,12 +11,21 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
+const users = {};
+
 io.on('connection', (socket) => {
-    // socket.broadcast.emit('hi');
+    
+    var clientName="wrong";
+    socket.on('get name',(name)=>{
+        clientName=name;
+        users[socket.id]=name;
+        console.log(socket.id,"by name");
+        socket.broadcast.emit('chat message',{"msg":`${clientName} is connected on chat`,"id":socket.id,"clientName":"Official"})
+    });
+
     console.log('a user connected');
     socket.on('chat message', (msg) => {
-        console.log('message: ' + msg);
-        io.emit('chat message', msg);
+        io.emit('chat message',{"msg":msg,"id":socket.id,"clientName":clientName});
     });
 
     socket.on('disconnect', () => {
