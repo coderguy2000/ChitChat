@@ -15,9 +15,8 @@
             background: rgba(0, 0, 0, 0.15);
             padding: 0.25rem;
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            width: 76%;
+            bottom: 0px;
             display: flex;
             height: 3rem;
             box-sizing: border-box;
@@ -56,97 +55,182 @@
             padding: 0.5rem 1rem;
         }
 
-        .right{
+        .right {
             display: flex;
             justify-content: flex-end;
         }
 
-        .ownMsg{
-           width: fit-content;
+        .ownMsg {
+            width: fit-content;
             padding: 5px 25px;
             border-radius: 20px;
             color: white;
             background-color: #48b28b;
         }
-        .otherMsg{
+
+        .otherMsg {
             width: fit-content;
             padding: 5px 7px 5px 24px;
             border-radius: 20px;
             color: white;
             background-color: #4e0d53;
         }
-        p{
+
+        .otherMsg p,.ownMsg p{
             float: right;
             margin-left: 25px;
             font-size: 10px;
         }
-        #header{
+
+        #header {
             background: purple;
             display: flex;
             justify-content: space-evenly;
             font-size: 20px;
             color: white;
         }
+        #connectionMessage{
+            position: absolute;
+            right: 10px;
+            top: 10px;
+        }
+        #connectionMessage p{
+            background: green;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px;
+            color: white;
+        }
+
+        .container {
+            width: 76%;
+            position: relative;
+        }
+        ul{
+            padding: 0px;
+            text-align: center;
+        }
+        li{
+            list-style: none;
+            padding: 1px;
+        }
+        li:hover{
+            cursor: pointer;
+        }
+        #connected-member {
+            background: #74706e;
+            float: right;
+            height: 88vh;
+            color: #f2f1f1;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
     </style>
 </head>
 
 <body>
-    <div id="header"></div>
-    <form id="formPrivate">
-        <input id="privateId" autocomplete="off" placeholder="Enter private id"/>
-        <input id="privateMessage" autocomplete="off" placeholder="Enter Message"/>
-        <button>Send</button>
-    </form>
-    <ul id="messages"></ul>
-    
-    <form id="form" action="">
-        <input id="input" autocomplete="off" /><button>Send</button>
-    </form>
+    <div id="connectionMessage"></div>
+    <div id="header">
+    </div>
+    <div id="connected-member">
+    </div>
+    <div class="container">
+        <ul id="messages"></ul>
+
+        <form id="form" action="">
+            <input id="input" autocomplete="off" /><button>Send</button>
+        </form>
+    </div>
 
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        var name =prompt('Enter your name'); 
+        var name = prompt('Enter your name');
         var socket = io();
-        var chatData="",headerData="";
+        var chatData = "", headerData = "";
         var input = document.getElementById('input');
         var privateId = document.getElementById('privateId');
-       
-        socket.emit('get name',name);
-        socket.on('header data',(data)=>{
-            headerData+=`<h3>Name : ${data.name}</h3> <h3>Id : ${data.id}</h3>`
-            document.getElementById('header').innerHTML=headerData;
+        var users = {};
+
+        socket.emit('get name', name);
+        socket.on('header data', (data) => {
+            headerData = `<h3>Name : ${data.name}</h3> <h3>Id : ${data.id}</h3> <h3 id="selectMember">To : All</h3>`
+            document.getElementById('header').innerHTML = headerData;
+
         });
 
-        
-        console.log(document.getElementById('header').value);
+        socket.on('connected-member', (dataOfMembers) => {
 
+            const keys = Object.keys(dataOfMembers);
+            users = dataOfMembers;
+            var memberData = `<ul><li onclick="selectMemberFun('toAll','-1','${socket.id}')" style="background:black; border-radius:15px"><h4>To All</h4></li>`;
+            keys.forEach((e,index) => {
+                memberData += `<li onclick="selectMemberFun('${e}','${index}','${socket.id}')"><h4>Name : ${dataOfMembers[e]} Id : ${e}</h4></li>`;                
+            });
+
+            memberData+='</ul>';
+            document.getElementById('connected-member').innerHTML = memberData;
+        })
+        socket.on('connection message',(data)=>{
+            console.log('on we are working');
+            document.getElementById("connectionMessage").innerHTML=`<p>${data.msg}</p>`;
+            setTimeout(()=>{
+                document.getElementById("connectionMessage").innerHTML=``;
+            },4000);
+        })
+
+        var selectMember = "toAll",selectMemberName="All";
+        const selectMemberFun=(e,index,clientId)=>{
+            if(clientId==e){
+                return ;
+            }
+
+            selectMember=e;
+            e==="toAll"?selectMemberName="All":selectMemberName=users[selectMember];
+            document.getElementById('selectMember').innerHTML=`To : ${selectMemberName}`;
+            
+            const keys = Object.keys(users);
+            if(index==-1)
+                memberData = `<ul><li onclick="selectMemberFun('toAll','-1','${clientId}')" style="background:black; border-radius:15px"><h4>To All</h4></li>`;
+            else
+                memberData = `<ul><li onclick="selectMemberFun('toAll','-1','${clientId}')"><h4>To All</h4></li>`;
+            keys.forEach((e,idx) => {
+                if(idx==index)
+                    memberData += `<li onclick="selectMemberFun('${e}','${idx}','${clientId}')" style="background:black; border-radius:15px"><h4>Name : ${users[e]} Id : ${e}</h4></li>`;     
+                else  
+                    memberData += `<li onclick="selectMemberFun('${e}','${idx}','${clientId}')"><h4>Name : ${users[e]} Id : ${e}</h4></li>`;              
+            });
+            memberData+='</ul>';
+            document.getElementById('connected-member').innerHTML = memberData;
+        }
+
+        
         form.addEventListener('submit', function (e) {
             e.preventDefault();
             if (input.value) {
-                socket.emit('chat message', input.value);
-                input.value = '';
+                if(selectMember==="toAll"){
+                    socket.emit('chat message', input.value);
+                    input.value = '';
+                }
+                else{
+                    chatData += `
+                    <li >
+                        <div class="right"/>
+                        <div class="ownMsg"><p>(Privately->${selectMemberName})</p>${input.value}</div>
+                        </div>
+                    </li>
+                    <hr/>
+                    `;
+                    socket.emit('private message', selectMember, input.value)
+                    input.value = '';
+                    document.getElementById('messages').innerHTML = chatData;
+                }
             }
         });
-        formPrivate.addEventListener('submit', function (e) {
-            e.preventDefault();
-            if (privateId.value&&privateMessage.value) {
-                chatData+=`
-                <li >
-                    <div class="right"/>
-                    <div class="ownMsg">${privateMessage.value}</div>
-                    </div>
-                </li>
-                <hr/>
-                `;
-                socket.emit('private message',privateId.value,privateMessage.value)
-                privateMessage.value = '';
-                document.getElementById('messages').innerHTML = chatData;
-            }
-        });
-        socket.on("private message",(senderName,msg)=>{
-            console.log(senderName,msg);
-            chatData+=`
+        
+        socket.on("private message", (senderName, msg) => {
+            console.log(senderName, msg);
+            chatData += `
                 <li>
                     <div class="otherMsg">
                         <p>(Privately->${senderName})</p>
@@ -156,9 +240,9 @@
             document.getElementById('messages').innerHTML = chatData;
         })
 
-        socket.on('chat message', (data)=>{
-            if(socket.id===data.id){
-                chatData+=`
+        socket.on('chat message', (data) => {
+            if (socket.id === data.id) {
+                chatData += `
                 <li >
                     <div class="right"/>
                     <div class="ownMsg">${data.msg}</div>
@@ -167,8 +251,8 @@
                 <hr/>
                 `;
             }
-            else{
-                chatData+=`
+            else {
+                chatData += `
                 <li>
                     <div class="otherMsg">
                         <p>(${data.clientName})</p>

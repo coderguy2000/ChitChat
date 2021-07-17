@@ -20,23 +20,27 @@ io.on('connection', (socket) => {
     socket.on('get name',(name)=>{
         clientName=name;
         users[socket.id]=name;
-        console.log(socket.id,"by name");
+        console.log(users,socket.id);
         socket.emit('header data',{"name":clientName,"id":socket.id});
-        socket.broadcast.emit('chat message',{"msg":`${clientName} is connected on chat`,"id":socket.id,"clientName":"Official"})
+        io.emit('connected-member',users);
+        socket.broadcast.emit('connection message',{"msg":`${clientName} is connected on chat`})
     });
     
     socket.on("private message", (anotherSocketId, msg) => {
         socket.to(anotherSocketId).emit("private message", users[socket.id], msg);
     });
 
-    console.log('a user connected');
+    // console.log('a user connected');
+   
     socket.on('chat message', (msg) => {
         io.emit('chat message',{"msg":msg,"id":socket.id,"clientName":clientName});
     });
 
 
     socket.on('disconnect', () => {
-      console.log('user disconnected');
+      delete users[socket.id];
+      io.emit('connected-member',users);
+      // console.log('user disconnected');
     });
 });
 
