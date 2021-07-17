@@ -11,7 +11,8 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-const users = {};
+var users = {};
+var port = process.env.PORT || 3000
 
 io.on('connection', (socket) => {
     
@@ -20,7 +21,12 @@ io.on('connection', (socket) => {
         clientName=name;
         users[socket.id]=name;
         console.log(socket.id,"by name");
+        socket.emit('header data',{"name":clientName,"id":socket.id});
         socket.broadcast.emit('chat message',{"msg":`${clientName} is connected on chat`,"id":socket.id,"clientName":"Official"})
+    });
+    
+    socket.on("private message", (anotherSocketId, msg) => {
+        socket.to(anotherSocketId).emit("private message", users[socket.id], msg);
     });
 
     console.log('a user connected');
@@ -28,11 +34,12 @@ io.on('connection', (socket) => {
         io.emit('chat message',{"msg":msg,"id":socket.id,"clientName":clientName});
     });
 
+
     socket.on('disconnect', () => {
       console.log('user disconnected');
     });
 });
 
-server.listen(3000, () => {
-  console.log('listening on *:3000');
+server.listen(port, () => {
+  console.log(`listening on *:${port}`);
 });

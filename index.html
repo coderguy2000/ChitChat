@@ -80,11 +80,25 @@
             margin-left: 25px;
             font-size: 10px;
         }
+        #header{
+            background: purple;
+            display: flex;
+            justify-content: space-evenly;
+            font-size: 20px;
+            color: white;
+        }
     </style>
 </head>
 
 <body>
+    <div id="header"></div>
+    <form id="formPrivate">
+        <input id="privateId" autocomplete="off" placeholder="Enter private id"/>
+        <input id="privateMessage" autocomplete="off" placeholder="Enter Message"/>
+        <button>Send</button>
+    </form>
     <ul id="messages"></ul>
+    
     <form id="form" action="">
         <input id="input" autocomplete="off" /><button>Send</button>
     </form>
@@ -94,9 +108,18 @@
     <script>
         var name =prompt('Enter your name'); 
         var socket = io();
-        socket.emit('get name',name);
-        var s="";
+        var chatData="",headerData="";
         var input = document.getElementById('input');
+        var privateId = document.getElementById('privateId');
+       
+        socket.emit('get name',name);
+        socket.on('header data',(data)=>{
+            headerData+=`<h3>Name : ${data.name}</h3> <h3>Id : ${data.id}</h3>`
+            document.getElementById('header').innerHTML=headerData;
+        });
+
+        
+        console.log(document.getElementById('header').value);
 
         form.addEventListener('submit', function (e) {
             e.preventDefault();
@@ -105,10 +128,37 @@
                 input.value = '';
             }
         });
+        formPrivate.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (privateId.value&&privateMessage.value) {
+                chatData+=`
+                <li >
+                    <div class="right"/>
+                    <div class="ownMsg">${privateMessage.value}</div>
+                    </div>
+                </li>
+                <hr/>
+                `;
+                socket.emit('private message',privateId.value,privateMessage.value)
+                privateMessage.value = '';
+                document.getElementById('messages').innerHTML = chatData;
+            }
+        });
+        socket.on("private message",(senderName,msg)=>{
+            console.log(senderName,msg);
+            chatData+=`
+                <li>
+                    <div class="otherMsg">
+                        <p>(Privately->${senderName})</p>
+                            ${msg}</div></li>
+                <hr/>
+            `;
+            document.getElementById('messages').innerHTML = chatData;
+        })
 
         socket.on('chat message', (data)=>{
             if(socket.id===data.id){
-                s+=`
+                chatData+=`
                 <li >
                     <div class="right"/>
                     <div class="ownMsg">${data.msg}</div>
@@ -118,7 +168,7 @@
                 `;
             }
             else{
-                s+=`
+                chatData+=`
                 <li>
                     <div class="otherMsg">
                         <p>(${data.clientName})</p>
@@ -126,7 +176,7 @@
                 <hr/>
                 `;
             }
-            document.getElementById('messages').innerHTML = s;
+            document.getElementById('messages').innerHTML = chatData;
             window.scrollTo(0, document.body.scrollHeight);
         });
     </script>

@@ -4,12 +4,14 @@
   "description": "Try to implement chat app by reading documnetation myself",
   "main": "index.js",
   "scripts": {
+    "start": "nodemon index",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
+    "nodemon": "^2.0.12",
     "socket.io": "^4.1.3"
   }
 }
